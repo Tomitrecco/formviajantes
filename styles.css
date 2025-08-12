@@ -1,0 +1,167 @@
+/* ========= Reset breve ========= */
+*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { width: 100%; height: 100%; overflow-x: hidden; }
+
+/* ========= Mobile-first ========= */
+:root{
+  --fs-base: clamp(15px, 3.3vw, 16.5px);
+  --radius: 8px;
+  --gap: 8px;
+  --border: #dcdfe3;
+  --muted: #666;
+  --card: #fafafa;
+  --bg: #fff;
+  --text: #111;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --card:#111319; --bg:#0b0c0f; --text:#f3f4f6; --border:#2a2f3a; --muted:#9aa0a6;
+  }
+}
+
+body{
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  font-size: var(--fs-base);
+  line-height: 1.35;
+  padding: 12px;
+}
+
+.container{ width: 100%; max-width: 980px; margin: 0 auto; }
+h1{ font-size: clamp(1rem, 4.2vw, 1.25rem); margin: 0 0 8px; }
+
+/* ========= Campos ========= */
+label{ display:block; font-weight: 600; margin: 4px 0; }
+input, select, textarea, button{
+  width: 100%;
+  font-size: 0.95rem;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: inherit;
+  line-height: 1.25;
+}
+
+/* Todos los textarea a 34px de alto */
+textarea{
+  resize: vertical;
+  height: 34px;        /* Alto fijo inicial */
+  min-height: 34px;    /* No más chicos */
+  max-height: 200px;   /* Por si se agranda */
+  padding: 6px 10px;
+}
+
+/* Checkbox / Radio más chicos */
+input[type="checkbox"],
+input[type="radio"]{
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  vertical-align: middle;
+  accent-color: #111;
+}
+
+/* ========= Grid ========= */
+.grid, .cols-2, .cols-3{ display: grid; gap: var(--gap); }
+.grid   { grid-template-columns: 1fr; }
+.cols-2 { grid-template-columns: 1fr; }
+.cols-3 { grid-template-columns: 1fr; }
+@media (min-width: 640px){
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 980px){
+  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+/* ========= Cards / layout ========= */
+.rowCard{
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 1px);
+  background: var(--card);
+  padding: 10px;
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+}
+.rowHeader{
+  display: flex; gap: 8px; flex-wrap: wrap;
+  align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.rowTitle{ font-weight: 800; }
+.flex{ display:flex; gap: 8px; flex-wrap: wrap; align-items: stretch; }
+.flex > *{ flex: 1 1 220px; }
+@media (max-width: 768px){
+  .flex{ flex-direction: column; }
+  .flex > *{ width: 100% !important; }
+  .rowHeader{ flex-direction: column; align-items: stretch; }
+  .btn, .btn-ghost{ width: 100%; }
+}
+.section{ margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e6e6e6; }
+
+/* ========= Botones ========= */
+.btn, .btn-ghost{
+  cursor: pointer; font-weight: 600; padding: 8px 12px;
+  border-radius: var(--radius);
+}
+.btn{ background: #111; color:#fff; border: 1px solid #111; }
+.btn:active{ opacity: .9; }
+.btn-ghost{ background:#f6f7f8; border:1px dashed var(--border); color:#111; }
+
+/* Botón "Agregar cliente" con separación */
+.btn-ghost.agregar-cliente{
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+/* Botón "Enviar gira" más chico */
+.btn.enviar-gira{
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+}
+
+/* ========= Mensajes ========= */
+.muted{ color: var(--muted); margin-top: 6px; }
+.ok{ background:#e8f5e9; border:1px solid #c8e6c9; color:#2e7d32; padding:8px; border-radius: var(--radius); margin-top:8px; }
+.err{ background:#ffebee; border:1px solid #ffcdd2; color:#c62828; padding:8px; border-radius: var(--radius); margin-top:8px; }
+
+/* ===== Ajuste “Cliente nuevo” ===== */
+.inline-check{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.flex > .inline-check{ flex: 0 0 auto; }
+
+/* ===== Medios de contacto ===== */
+.medios-opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.medios-opciones label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  min-width: 110px;
+}
+.medios-opciones input[type="checkbox"]{
+  width: 16px;
+  height: 16px;
+}
+.medios-otros{
+  flex: 1 1 100%;
+  margin-top: 6px;
+}
+
+/* Utilidad */
+.hide{ display:none !important; }

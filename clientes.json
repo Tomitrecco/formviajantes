@@ -1,0 +1,14 @@
+[
+  {
+    "vendedor": "Juan Pérez",
+    "clientes": ["Distribuidora El Sol SRL", "Panadería El Trigal", "Supermercado La Plaza"]
+  },
+  {
+    "vendedor": "Ana Gómez",
+    "clientes": ["Comercial Los Andes SA", "Librería Punto y Coma", "Boutique La Rosa"]
+  },
+  {
+    "vendedor": "Carlos Martínez",
+    "clientes": ["Ferretería San José", "Corralón El Molino"]
+  }
+]

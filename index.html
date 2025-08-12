@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Registro de Giras</title>
+  <link rel="stylesheet" href="styles.css">
+  <meta name="color-scheme" content="light dark">
+</head>
+<body>
+  <div class="container">
+    <h1>Registro de Giras</h1>
+
+    <!-- Fila superior -->
+    <div class="grid">
+      <div>
+        <label for="persona">Vendedor</label>
+        <select id="persona" required>
+          <option value="" selected disabled>Seleccioná…</option>
+        </select>
+      </div>
+      <div>
+        <label for="fecha">Fecha</label>
+        <input id="fecha" type="date"/>
+      </div>
+    </div>
+
+    <div class="flex" style="margin-top:12px;">
+      <button id="refreshClients" class="btn-ghost">↻ Actualizar clientes</button>
+      <!-- (ya no hay botón global de “+ Agregar cliente”) -->
+    </div>
+
+    <div id="rows"></div>
+
+    <div class="flex" style="margin-top:16px;">
+      <button id="sendBtn" class="btn">Enviar gira</button>
+    </div>
+    <div id="msg" class="muted">Cada cliente se guarda como un renglón con el mismo ID de gira.</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
