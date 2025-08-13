@@ -3,41 +3,111 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Registro de Giras</title>
+  <title>Giras · App</title>
   <link rel="stylesheet" href="styles.css">
-  <meta name="color-scheme" content="light dark">
 </head>
 <body>
-  <div class="container">
-    <h1>Registro de Giras</h1>
 
-    <!-- Fila superior -->
-    <div class="grid">
-      <div>
-        <label for="persona">Vendedor</label>
-        <select id="persona" required>
-          <option value="" selected disabled>Seleccioná…</option>
-        </select>
-      </div>
-      <div>
-        <label for="fecha">Fecha</label>
-        <input id="fecha" type="date"/>
-      </div>
+<!-- Login/Registro -->
+<section id="view-auth" class="card">
+  <h1 id="auth-title">Iniciar sesión</h1>
+  <p id="auth-sub">Usá tu email y contraseña.</p>
+
+  <!-- Login -->
+  <form id="loginForm">
+    <label>Email</label>
+    <input id="log_email" type="email" required>
+    <label>Contraseña</label>
+    <input id="log_pass" type="password" required>
+    <div style="display:flex; gap:12px; margin-top:16px">
+      <button class="btn" type="submit">Ingresar</button>
+      <button class="btn-ghost" type="button" id="goToSignup">Crear cuenta</button>
     </div>
+    <div id="loginMsg" class="msg"></div>
+  </form>
 
-    <div class="flex" style="margin-top:12px;">
-      <button id="refreshClients" class="btn-ghost">↻ Actualizar clientes</button>
-      <!-- (ya no hay botón global de “+ Agregar cliente”) -->
+  <!-- Signup -->
+  <form id="signupForm" class="hidden">
+    <div class="row">
+      <div><label>Nombre vendedor</label><input id="reg_name" type="text" required></div>
+      <div><label>Apellido vendedor</label><input id="reg_last" type="text" required></div>
     </div>
-
-    <div id="rows"></div>
-
-    <div class="flex" style="margin-top:16px;">
-      <button id="sendBtn" class="btn">Enviar gira</button>
+    <label>Email</label><input id="reg_email" type="email" required>
+    <label>Clave</label><input id="reg_pass" type="password" required>
+    <div style="display:flex; gap:12px; margin-top:16px">
+      <button class="btn" type="submit">Crear cuenta</button>
+      <button class="btn-ghost" type="button" id="backToLogin">Volver</button>
     </div>
-    <div id="msg" class="muted">Cada cliente se guarda como un renglón con el mismo ID de gira.</div>
+    <div id="signupMsg" class="msg"></div>
+  </form>
+</section>
+
+<!-- Home -->
+<section id="view-home" class="card hidden">
+  <h1>Panel de Giras</h1>
+  <p id="userEmail" class="muted">&nbsp;</p>
+
+  <!-- Selector de pestañas -->
+  <div style="display:flex; gap:8px; margin-bottom:16px">
+    <button id="tab-armado" class="btn">Armado de gira</button>
+    <button id="tab-registro" class="btn-ghost">Registro de gira</button>
   </div>
 
-  <script src="app.js"></script>
+  <!-- Armado de gira -->
+  <div id="section-armado">
+    <h2>Armado de gira</h2>
+    <div>
+      <label>Nombre de la gira</label>
+      <input id="nombre_gira" type="text" placeholder="Ej: Gira Zona Norte" required>
+    </div>
+    <div class="row">
+      <div>
+        <label>Fecha desde</label>
+        <input id="fecha_desde" type="date">
+      </div>
+      <div>
+        <label>Fecha hasta</label>
+        <input id="fecha_hasta" type="date">
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+        <strong>Clientes a visitar</strong>
+        <button id="addVisitaBtn" class="btn-ghost" type="button">+ Agregar</button>
+      </div>
+      <div id="visitasList" style="display:grid; gap:8px"></div>
+    </div>
+
+    <div style="display:flex; gap:12px; margin-top:16px">
+      <button id="guardarGiraBtn" class="btn">Guardar gira</button>
+      <div id="giraMsg" class="msg"></div>
+    </div>
+
+    <div class="sep"></div>
+    <h3>Agregar cliente nuevo</h3>
+    <div class="row">
+      <div><input id="nuevoClienteNombre" placeholder="Nombre del cliente"></div>
+      <div><button id="btnAgregarCliente" class="btn" type="button">Agregar</button></div>
+    </div>
+    <div id="clienteMsg" class="msg"></div>
+  </div>
+
+  <!-- Registro de gira -->
+  <div id="section-registro" class="hidden">
+    <h2>Registro de giras</h2>
+    <div id="registroVisitasList" style="margin-top:12px; display:grid; gap:8px"></div>
+    <div style="margin-top:12px">
+      <button class="btn" id="guardarRegistroBtn">Guardar registro</button>
+      <div id="registroMsg" class="msg"></div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+  <button class="btn-ghost" id="logoutBtn">Cerrar sesión</button>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="main.js"></script>
 </body>
 </html>

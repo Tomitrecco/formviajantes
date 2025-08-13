@@ -1,232 +1,130 @@
-/* ========= Reset breve ========= */
-*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { width: 100%; height: 100%; overflow-x: hidden; }
-
-/* ========= Paleta institucional (verde) ========= */
 :root{
-  --fs-base: clamp(15px, 3.3vw, 16.5px);
-  --radius: 8px;
-  --gap: 8px;
-
-  /* Colores (claro) */
-  --bg: #f5f7fb;              /* fondo general */
-  --card:#ffffff;              /* paneles */
-  --border:#d9dee7;            /* bordes */
-  --text:#1f2937;              /* texto principal */
-  --muted:#64748b;             /* texto secundario */
-  --primary:#16a34a;           /* verde institucional */
-  --primary-hover:#15803d;
-  --primary-active:#166534;
-  --primary-ghost-bg: rgba(22,163,74,.08);
-  --ring: rgba(22,163,74,.35); /* foco accesible */
+  --bg:#0b1220; --card:#0f172a; --text:#e2e8f0; --muted:#94a3b8; --primary:#22d3ee; --border:#1f2a44;
+  --radius:14px; --gap:12px; --ring:0 0 0 3px rgba(34,211,238,.25);
 }
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#0d1117;
-    --card:#11161f;
-    --border:#253043;
-    --text:#e6edf3;
-    --muted:#a1a9b6;
-    --primary:#4ade80;
-    --primary-hover:#22c55e;
-    --primary-active:#16a34a;
-    --primary-ghost-bg: rgba(74,222,128,.12);
-    --ring: rgba(74,222,128,.35);
-  }
-}
-
-/* ========= Tipografía/espaciado base ========= */
+*{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+html,body{height:100%}
 body{
-  margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  color: var(--text);
-  background: var(--bg);
-  font-size: var(--fs-base);
-  line-height: 1.35;
-  padding: 12px;
+  margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background: radial-gradient(1200px 800px at 10% 0%, #0b1220, #030712 60%);
+  color:var(--text);
+  display:grid; place-items:center; padding:16px;
 }
-.container{ width: 100%; max-width: 980px; margin: 0 auto; }
-h1{ font-size: clamp(1rem, 4.2vw, 1.25rem); margin: 0 0 10px; }
-
-/* ========= Campos ========= */
-label{ display:block; font-weight: 600; margin: 4px 0; }
-
+.card{
+  width:min(600px, 100%);
+  background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  padding: clamp(18px, 4vw, 24px);
+  box-shadow: 0 10px 40px rgba(0,0,0,.35);
+}
+h1,h2,h3{margin:0 0 6px}
+p{margin:0 0 20px; color:var(--muted);}
+label{display:block; font-weight:600; margin:10px 0 6px}
 input, select{
-  width: 100%;
-  min-height: 34px;
-  padding: 6px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: #fff;
-  color: inherit;
-  line-height: 1.25;
+  width:100%; padding:10px; border-radius:10px; border:1px solid var(--border);
+  background:#0b1324; color:var(--text)
 }
-textarea{
-  width: 100%;
-  resize: vertical;
-  height: 34px;
-  min-height: 34px;
-  max-height: 220px;
-  padding: 6px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: #fff;
-  color: inherit;
-  line-height: 1.25;
-}
-
-/* Checkboxes / radios compactos */
-input[type="checkbox"],
-input[type="radio"]{
-  width: 16px; height: 16px; min-height: 0;
-  padding: 0; margin: 0; vertical-align: middle;
-  accent-color: var(--primary);
+input:focus, select:focus{outline:none; box-shadow: var(--ring); border-color:#2dd4bf}
+.row{display:grid; grid-template-columns:1fr 1fr; gap:var(--gap)}
+button{border:0; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700}
+.btn{background:linear-gradient(180deg, #22d3ee, #06b6d4); color:#06223a}
+.btn-ghost{background:rgba(255,255,255,.05); color:var(--text); border:1px solid var(--border)}
+.muted{color:var(--muted)}
+.sep{height:1px; background:var(--border); margin:16px 0}
+.hidden{display:none !important}
+.msg{margin:10px 0 0; font-size:14px}
+.msg.err{color:#ef4444}
+.msg.ok{color:#10b981}
+.rowCard{border:1px solid var(--border); border-radius:10px; padding:10px}
+/* Filas de formulario adaptables */
+.row-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--gap);
 }
 
-/* ========= Grid ========= */
-.grid, .cols-2, .cols-3{ display: grid; gap: var(--gap); }
-.grid   { grid-template-columns: 1fr; }
-.cols-2 { grid-template-columns: 1fr; }
-.cols-3 { grid-template-columns: 1fr; }
-@media (min-width: 640px){
-  .cols-2 { grid-template-columns: 1fr 1fr; }
-  .cols-3 { grid-template-columns: 1fr 1fr; }
-}
-@media (min-width: 980px){
-  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
-}
-
-/* ========= Cards / layout ========= */
-.rowCard{
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: calc(var(--radius) + 1px);
-  padding: 12px;
-  margin-top: 10px;
-  box-shadow: 0 1px 0 rgba(0,0,0,.02), 0 6px 18px rgba(0,0,0,.06);
-}
-.rowHeader{
-  display: flex; gap: 8px; flex-wrap: wrap;
-  align-items: center; justify-content: space-between;
-  margin-bottom: 6px;
-}
-.rowTitle{ font-weight: 800; letter-spacing: .2px; }
-.flex{ display:flex; gap: 8px; flex-wrap: wrap; align-items: stretch; }
-.flex > *{ flex: 1 1 220px; }
-@media (max-width: 768px){
-  .flex{ flex-direction: column; }
-  .flex > *{ width: 100% !important; }
-  .rowHeader{ flex-direction: column; align-items: stretch; }
-}
-.section{ margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
-
-/* ========= Botones ========= */
-button{
-  width: auto;
-  min-height: 30px;
-  padding: 6px 12px;
-  font-size: .92rem;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  line-height: 1;
-  cursor: pointer;
-  transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease, transform .02s ease-in-out;
-}
-button:focus-visible{
-  outline: none;
-  box-shadow: 0 0 0 3px var(--ring);
-}
-
-/* No estirarse en flex */
-.flex > button,
-.flex > .btn,
-.flex > .btn-ghost{ flex: 0 0 auto; }
-
-/* Primario */
-.btn{
-  background: var(--primary);
-  color: #fff;
-  border: 1px solid var(--primary);
-  font-weight: 700;
-}
-.btn:hover{ background: var(--primary-hover); border-color: var(--primary-hover); }
-.btn:active{ background: var(--primary-active); border-color: var(--primary-active); transform: translateY(1px); }
-
-/* Secundario */
-.btn-ghost{
-  background: transparent;
-  color: var(--primary);
-  border: 1px solid var(--primary);
-  font-weight: 700;
-}
-.btn-ghost:hover{ background: var(--primary-ghost-bg); }
-.btn-ghost:active{ transform: translateY(1px); }
-
-/* Botón "Actualizar clientes" */
-#refreshClients{
-  min-height: 26px;
-  padding: 3px 8px;
-  font-size: .85rem;
-  border-radius: 6px;
-  width: auto !important;
-}
-
-/* "+ Agregar cliente" */
-.btn-ghost.agregar-cliente{
-  margin-top: 6px;
-  margin-bottom: 4px;
-}
-
-/* "Enviar gira" */
-.btn.enviar-gira{
-  min-height: 32px;
-  padding: 6px 12px;
-  font-size: .95rem;
-  width: auto !important;
-}
-
-/* ========= Mensajes ========= */
-.muted{ color: var(--muted); margin-top: 6px; }
-.ok{
-  background:#e8f5e9; border:1px solid #c8e6c9; color:#2e7d32;
-  padding:8px; border-radius: var(--radius); margin-top:8px;
-}
-.err{
-  background:#ffebee; border:1px solid #ffcdd2; color:#c62828;
-  padding:8px; border-radius: var(--radius); margin-top:8px;
-}
-
-/* ===== “Cliente nuevo” ===== */
-.inline-check{
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-}
-.flex > .inline-check{ flex: 0 0 auto; }
-
-/* ===== Medios de contacto ===== */
-.medios-opciones {
+/* Checkboxes */
+.checkbox-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
 }
-.medios-opciones label {
+
+.checkbox-group label {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-weight: 600;
-  min-width: 110px;
-}
-.medios-opciones input[type="checkbox"]{
-  width: 16px; height: 16px;
-}
-.medios-otros{
-  flex: 1 1 100%;
-  margin-top: 6px;
+  font-weight: normal;
 }
 
-/* util */
-.hide{ display:none !important; }
+/* Textareas */
+textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #0b1324;
+  color: var(--text);
+  resize: vertical;
+}
+
+textarea:focus {
+  outline: none;
+  box-shadow: var(--ring);
+  border-color: #2dd4bf;
+}
+
+/* Separar secciones del formulario */
+.form-section {
+  margin-bottom: 14px;
+}
+
+.medios-contacto {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;              /* espacio entre opciones */
+    align-items: center;    /* alinea checkbox y texto verticalmente */
+}
+
+.medios-contacto label {
+    display: flex;
+    align-items: center;
+    gap: 4px;                /* espacio entre checkbox y texto */
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 10px; /* fila/columna */
+  align-items: center;
+}
+
+.form-grid label {
+  white-space: nowrap; /* para que la pregunta no se corte en varias líneas */
+  font-weight: 350;
+}
+
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  width: 100%;
+}
+
+.form-grid textarea {
+  resize: vertical;
+  min-height: 35px;
+}
+
+.medios-contacto {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* dos por fila */
+    gap: 4px 12px;
+}
+.motivo-extra {
+  grid-column: 2 / 3; /* que se coloque solo en la columna de respuesta */
+}
+
+.hidden {
+    display: none;
+}
