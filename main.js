@@ -82,18 +82,47 @@ function visitaRowTemplate() {
                     ${opciones}
                 </select>
             </div>
+            <div>
+                <label>Motivo</label>
+                <select name="motivo" class="motivo-contacto">
+                    <option value="">-- Seleccionar --</option>
+                    <option value="Cobrar">Cobrar</option>
+                    <option value="Vender">Vender</option>
+                    <option value="Vincular">Vincular</option>
+                    <option value="Otro">Otro</option>
+                </select>
+                <input type="text" name="motivo_otro" class="hidden motivo-extra" placeholder="Describa el motivo" />
+            </div>
         </div>
         <button type="button" class="btn-ghost removeVisita" style="margin-top:8px">Quitar</button>
     </div>`;
 }
 
+
 function addVisitaRow() {
     const wrap = document.createElement('div');
     wrap.innerHTML = visitaRowTemplate();
     const el = wrap.firstElementChild;
+
+    // Botón para quitar fila
     el.querySelector('.removeVisita').addEventListener('click', () => el.remove());
+
+    // Lógica de mostrar/ocultar input "Otro"
+    const motivoSelect = el.querySelector('.motivo-contacto');
+    const motivoExtra = el.querySelector('.motivo-extra');
+
+    motivoSelect.addEventListener('change', () => {
+        if (motivoSelect.value === 'Otro') {
+            motivoExtra.classList.remove('hidden');
+        } else {
+            motivoExtra.classList.add('hidden');
+            motivoExtra.value = '';
+        }
+    });
+
     $('#visitasList').appendChild(el);
 }
+
 
 async function createGiraAndVisitas() {
     const nombreGira = $('#nombre_gira').value.trim();
@@ -112,10 +141,18 @@ async function createGiraAndVisitas() {
         .select('id').single();
     if (giraErr) return flash($('#giraMsg'), giraErr.message, 'err');
 
-    const visitas = cards.map(c => ({
-        gira_id: gira.id,
-        cliente_id: c.querySelector('select[name="cliente"]').value
-    })).filter(v => v.cliente_id);
+    const visitas = cards.map(c => {
+        const motivoSel = c.querySelector('select[name="motivo"]').value;
+        const motivoOtro = c.querySelector('input[name="motivo_otro"]').value.trim();
+        const motivoFinal = motivoSel === 'Otro' ? `Otro: ${motivoOtro}` : motivoSel;
+
+        return {
+            gira_id: gira.id,
+            cliente_id: c.querySelector('select[name="cliente"]').value,
+            motivo: motivoFinal || ''
+        };
+    }).filter(v => v.cliente_id);
+
 
     const { error: visErr } = await supabase.from('gira_visitas').insert(visitas);
     if (visErr) return flash($('#giraMsg'), visErr.message, 'err');
@@ -175,9 +212,34 @@ async function cargarGirasDelVendedor() {
     });
 }
 
-// ============================================
-// Cargar detalle de visitas de una gira (FORMULARIO COMPLETO)
-// ============================================
+// Función de mensaje flotante
+function showToast(message, type = 'ok') {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.position = 'fixed';
+    toast.style.bottom = '20px';
+    toast.style.right = '20px';
+    toast.style.padding = '10px 16px';
+    toast.style.borderRadius = '8px';
+    toast.style.color = '#fff';
+    toast.style.fontSize = '14px';
+    toast.style.zIndex = '9999';
+    toast.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+    toast.style.backgroundColor = type === 'ok' ? '#16a34a' : '#dc2626';
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s ease';
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+    });
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
+}
+
 async function cargarVisitasDeGira(giraId) {
     const { data, error } = await supabase
         .from('gira_visitas')
@@ -185,7 +247,8 @@ async function cargarVisitasDeGira(giraId) {
             id,
             clientes(nombre)
         `)
-        .eq('gira_id', giraId);
+        .eq('gira_id', giraId)
+        .eq('cerrado', false);
 
     const contenedor = document.getElementById('registroVisitasList');
     contenedor.innerHTML = '';
@@ -196,14 +259,14 @@ async function cargarVisitasDeGira(giraId) {
     }
 
     if (!data || !data.length) {
-        contenedor.innerHTML = '<p class="muted">No hay visitas registradas para esta gira.</p>';
+        contenedor.innerHTML = '<p class="muted">No hay visitas pendientes para esta gira.</p>';
         return;
     }
 
     data.forEach(v => {
         document.addEventListener('change', function (e) {
             if (e.target.classList.contains('motivo-contacto')) {
-                const inputOtro = e.target.nextElementSibling; // el input justo debajo
+                const inputOtro = e.target.nextElementSibling;
                 if (e.target.value === 'Otro') {
                     inputOtro.classList.remove('hidden');
                 } else {
@@ -215,72 +278,126 @@ async function cargarVisitasDeGira(giraId) {
 
         const card = document.createElement('div');
         card.className = 'rowCard';
+        card.dataset.visitaId = v.id;
         card.innerHTML = `
             <h2>${v.clientes?.nombre || 'Sin nombre'}</h2>
-            <form class="form-grid" data-id="${v.id}">
-            <label>Tipo de gira</label>
-            <select name="tipo_gira">
-                <option value="">-- Seleccionar --</option>
-                <option value="0">0 - Sin gira</option>
-                <option value="1">1 - Gira corta</option>
-                <option value="2">2 - Gira larga</option>
-            </select>
+            <form class="form-grid visitaForm" data-id="${v.id}">
+                <label>Tipo de gira</label>
+                <select name="tipo_gira">
+                    <option value="">-- Seleccionar --</option>
+                    <option value="0">0 - Sin gira</option>
+                    <option value="1">1 - Gira corta</option>
+                    <option value="2">2 - Gira larga</option>
+                </select>
 
-            <label>Medios de contacto</label>
-            <div class="medios-contacto">
-                <label><input type="checkbox" name="medio_contacto" value="WhatsApp"> WhatsApp</label>
-                <label><input type="checkbox" name="medio_contacto" value="Teléfono"> Teléfono</label>
-                <label><input type="checkbox" name="medio_contacto" value="Email"> Email</label>
-                <label><input type="checkbox" name="medio_contacto" value="Visita"> Visita</label>
-            </div>
+                <label>Medios de contacto</label>
+                <div class="medios-contacto">
+                    <label><input type="checkbox" name="medio_contacto" value="WhatsApp"> WhatsApp</label>
+                    <label><input type="checkbox" name="medio_contacto" value="Teléfono"> Teléfono</label>
+                    <label><input type="checkbox" name="medio_contacto" value="Email"> Email</label>
+                    <label><input type="checkbox" name="medio_contacto" value="Visita"> Visita</label>
+                </div>
 
-            <label>Tiempo de visita (minutos)</label>
-            <input name="tiempo_visita" type="number"/>
+                <label>Tiempo de visita (minutos)</label>
+                <input name="tiempo_visita" type="number"/>
 
-            <label>Motivo del contacto</label>
-            <select name="motivo_contacto" class="motivo-contacto">
-                <option value="">-- Seleccionar --</option>
-                <option value="Vincular">Vincular</option>
-                <option value="Vender">Vender</option>
-                <option value="Cobrar">Cobrar</option>
-                <option value="Otro">Otro</option>
-            </select>
+                <label>Motivo del contacto</label>
+                <select name="motivo_contacto" class="motivo-contacto">
+                    <option value="">-- Seleccionar --</option>
+                    <option value="Vincular">Vincular</option>
+                    <option value="Vender">Vender</option>
+                    <option value="Cobrar">Cobrar</option>
+                    <option value="Otro">Otro</option>
+                </select>
 
-            <div id="otroMotivoWrapper" class="hidden motivo-extra">
-            <input type="text" id="otroMotivo" placeholder="Describa el motivo" />
-            </div>
+                <div id="otroMotivoWrapper" class="hidden motivo-extra">
+                    <input type="text" name="motivo_otro" placeholder="Describa el motivo" />
+                </div>
 
-            <label>¿Nota de pedido?</label>
-            <select name="nota_pedido">
-                <option value="true">Sí</option>
-                <option value="false">No</option>
-            </select>
+                <label>¿Nota de pedido?</label>
+                <select name="nota_pedido">
+                    <option value="true">Sí</option>
+                    <option value="false">No</option>
+                </select>
 
-            <label>Monto vendido</label>
-            <input name="monto_vendido" type="number"/>
+                <label>Monto vendido</label>
+                <input name="monto_vendido" type="number"/>
 
-            <label>¿Cliente tenía deuda?</label>
-            <select name="cliente_tenia_deuda">
-                <option value="true">Sí</option>
-                <option value="false">No</option>
-            </select>
+                <label>¿Cliente tenía deuda?</label>
+                <select name="cliente_tenia_deuda">
+                    <option value="true">Sí</option>
+                    <option value="false">No</option>
+                </select>
 
-            <label>¿Se cobró deuda?</label>
-            <select name="deuda_cobrada">
-                <option value="true">Sí</option>
-                <option value="false">No</option>
-            </select>
+                <label>¿Se cobró deuda?</label>
+                <select name="deuda_cobrada">
+                    <option value="true">Sí</option>
+                    <option value="false">No</option>
+                </select>
 
-            <label>Monto cobrado</label>
-            <input name="monto_cobrado" type="number"/>
+                <label>Monto cobrado</label>
+                <input name="monto_cobrado" type="number"/>
 
-            <label>Comentario</label>
-            <textarea name="comentario"></textarea>
+                <label>Comentario</label>
+                <textarea name="comentario"></textarea>
 
-            <label>Alerta</label>
-            <textarea name="alerta"></textarea>
+                <label>Alerta</label>
+                <textarea name="alerta"></textarea>
             </form>
+
+            <button type="button" class="btn cerrarBtn" style="margin-top:8px">Cerrar registro</button>
         `;
+
+        card.querySelector('.cerrarBtn').addEventListener('click', async () => {
+            const f = card.querySelector('.visitaForm');
+
+            const insert = {
+                gira_visita_id: f.dataset.id,
+                tipo_gira: parseInt(f.querySelector('[name="tipo_gira"]').value) || null,
+                medio_contacto: Array.from(f.querySelectorAll('input[name="medio_contacto"]:checked'))
+                            .map(cb => cb.value)
+                            .join(', ') || null,
+                tiempo_visita: parseInt(f.querySelector('[name="tiempo_visita"]').value) || null,
+                motivo_contacto: (() => {
+                    const motivo = f.querySelector('[name="motivo_contacto"]').value;
+                    if (motivo === 'Otro') {
+                        return `Otro: ${f.querySelector('[name="motivo_otro"]').value}`;
+                    }
+                    return motivo || null;
+                })(),
+                nota_pedido: f.querySelector('[name="nota_pedido"]').value === 'true',
+                monto_vendido: f.querySelector('[name="monto_vendido"]').value
+                    ? parseFloat(f.querySelector('[name="monto_vendido"]').value)
+                    : null,
+                cliente_tenia_deuda: f.querySelector('[name="cliente_tenia_deuda"]').value === 'true',
+                deuda_cobrada: f.querySelector('[name="deuda_cobrada"]').value === 'true',
+                monto_cobrado: f.querySelector('[name="monto_cobrado"]').value
+                    ? parseFloat(f.querySelector('[name="monto_cobrado"]').value)
+                    : null,
+                comentario: f.querySelector('[name="comentario"]').value || null,
+                alerta: f.querySelector('[name="alerta"]').value || null
+            };
+
+            const { error: insertErr } = await supabase.from('gira_respuestas').insert(insert);
+            if (insertErr) {
+                showToast('❌ Error guardando registro: ' + insertErr.message, 'err');
+                return;
+            }
+
+            const { error: cerrarErr } = await supabase
+                .from('gira_visitas')
+                .update({ cerrado: true })
+                .eq('id', f.dataset.id);
+
+            if (cerrarErr) {
+                showToast('❌ Error al cerrar registro: ' + cerrarErr.message, 'err');
+                return;
+            }
+
+            showToast('✅ Registro guardado y cerrado', 'ok');
+            card.remove();
+        });
+
         contenedor.appendChild(card);
     });
 
@@ -289,18 +406,8 @@ async function cargarVisitasDeGira(giraId) {
     btnVolver.textContent = '⬅ Volver a giras';
     btnVolver.onclick = cargarGirasDelVendedor;
     contenedor.appendChild(btnVolver);
-
-    const btnGuardar = document.createElement('button');
-    btnGuardar.className = 'btn';
-    btnGuardar.textContent = 'Guardar registro';
-    btnGuardar.style.marginTop = '12px';
-    btnGuardar.onclick = guardarRegistroVisitas;
-    contenedor.appendChild(btnGuardar);
 }
 
-// ============================================
-// Guardar registro de visitas
-// ============================================
 async function guardarRegistroVisitas() {
     const formularios = document.querySelectorAll('.visitaForm');
     const inserts = [];
@@ -312,7 +419,6 @@ async function guardarRegistroVisitas() {
             medio_contacto: Array.from(f.querySelectorAll('input[name="medio_contacto"]:checked'))
                      .map(cb => cb.value)
                      .join(', ') || null,
-
             tiempo_visita: parseInt(f.querySelector('[name="tiempo_visita"]').value) || null,
             motivo_contacto: (() => {
                 const motivo = f.querySelector('[name="motivo_contacto"]').value;
@@ -321,12 +427,15 @@ async function guardarRegistroVisitas() {
                 }
                 return motivo || null;
             })(),
-
             nota_pedido: f.querySelector('[name="nota_pedido"]').value === 'true',
-            monto_vendido: parseFloat(f.querySelector('[name="monto_vendido"]').value) || null,
+            monto_vendido: f.querySelector('[name="monto_vendido"]').value
+                ? parseFloat(f.querySelector('[name="monto_vendido"]').value)
+                : null,
             cliente_tenia_deuda: f.querySelector('[name="cliente_tenia_deuda"]').value === 'true',
             deuda_cobrada: f.querySelector('[name="deuda_cobrada"]').value === 'true',
-            monto_cobrado: parseFloat(f.querySelector('[name="monto_cobrado"]').value) || null,
+            monto_cobrado: f.querySelector('[name="monto_cobrado"]').value
+                ? parseFloat(f.querySelector('[name="monto_cobrado"]').value)
+                : null,
             comentario: f.querySelector('[name="comentario"]').value || null,
             alerta: f.querySelector('[name="alerta"]').value || null
         });
