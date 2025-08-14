@@ -97,15 +97,38 @@
   <div id="section-registro" class="hidden">
     <h2>Registro de giras</h2>
     <div id="registroVisitasList" style="margin-top:12px; display:grid; gap:8px"></div>
-    <div style="margin-top:12px">
-      <button class="btn" id="guardarRegistroBtn">Guardar registro</button>
-      <div id="registroMsg" class="msg"></div>
-    </div>
   </div>
 
   <div class="sep"></div>
   <button class="btn-ghost" id="logoutBtn">Cerrar sesión</button>
 </section>
+
+<!-- Plantilla HTML que usará crearVisitaCard() -->
+<template id="nueva-visita-template">
+  <div class="rowCard">
+    <h2>Nueva visita</h2>
+    <form class="form-grid visitaForm">
+      <!-- Cliente nuevo -->
+      <div style="grid-column: 1 / -1;">
+        <label><input type="checkbox" name="es_cliente_nuevo"> Cliente nuevo</label>
+      </div>
+      <!-- Cliente existente -->
+      <div style="grid-column: 1 / -1;">
+        <label>Cliente existente</label>
+        <select name="cliente_id" class="cliente-select">
+          <option value="">-- Seleccionar cliente --</option>
+        </select>
+      </div>
+      <!-- Nombre cliente nuevo -->
+      <div class="hidden lbl-cliente-nuevo" style="grid-column: 1 / -1;">
+        <label>Nombre del nuevo cliente</label>
+        <input type="text" name="cliente_nuevo" placeholder="Ingrese nombre del nuevo cliente" />
+      </div>
+      <!-- El resto del formulario se agrega por JS -->
+    </form>
+    <button type="button" class="btn cerrarBtn" style="margin-top:8px">Cerrar registro</button>
+  </div>
+</template>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="main.js"></script>

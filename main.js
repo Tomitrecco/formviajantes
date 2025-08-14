@@ -260,28 +260,193 @@ async function cargarVisitasDeGira(giraId) {
 
     if (!data || !data.length) {
         contenedor.innerHTML = '<p class="muted">No hay visitas pendientes para esta gira.</p>';
-        return;
+    } else {
+        data.forEach(v => {
+            const card = document.createElement('div');
+            card.className = 'rowCard';
+            card.dataset.visitaId = v.id;
+            card.innerHTML = `
+                <h2>${v.clientes?.nombre || 'Sin nombre'}</h2>
+                <form class="form-grid visitaForm" data-id="${v.id}">
+                    <label>Tipo de gira</label>
+                    <select name="tipo_gira">
+                        <option value="">-- Seleccionar --</option>
+                        <option value="0">0 - Sin gira</option>
+                        <option value="1">1 - Gira corta</option>
+                        <option value="2">2 - Gira larga</option>
+                    </select>
+
+                    <label>Medios de contacto</label>
+                    <div class="medios-contacto">
+                        <label><input type="checkbox" name="medio_contacto" value="WhatsApp"> WhatsApp</label>
+                        <label><input type="checkbox" name="medio_contacto" value="Teléfono"> Teléfono</label>
+                        <label><input type="checkbox" name="medio_contacto" value="Email"> Email</label>
+                        <label><input type="checkbox" name="medio_contacto" value="Visita"> Visita</label>
+                    </div>
+
+                    <label>Tiempo de visita (minutos)</label>
+                    <input name="tiempo_visita" type="number"/>
+
+                    <label>Motivo del contacto</label>
+                    <select name="motivo_contacto" class="motivo-contacto">
+                        <option value="">-- Seleccionar --</option>
+                        <option value="Vincular">Vincular</option>
+                        <option value="Vender">Vender</option>
+                        <option value="Cobrar">Cobrar</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                    <input type="text" name="motivo_otro" class="hidden motivo-extra" placeholder="Describa el motivo" />
+
+                    <label>¿Nota de pedido?</label>
+                    <select name="nota_pedido">
+                        <option value="true">Sí</option>
+                        <option value="false">No</option>
+                    </select>
+
+                    <label>Monto vendido</label>
+                    <input name="monto_vendido" type="number"/>
+
+                    <label>¿Cliente tenía deuda?</label>
+                    <select name="cliente_tenia_deuda">
+                        <option value="true">Sí</option>
+                        <option value="false">No</option>
+                    </select>
+
+                    <label>¿Se cobró deuda?</label>
+                    <select name="deuda_cobrada">
+                        <option value="true">Sí</option>
+                        <option value="false">No</option>
+                    </select>
+
+                    <label>Monto cobrado</label>
+                    <input name="monto_cobrado" type="number"/>
+
+                    <label>Comentario</label>
+                    <textarea name="comentario"></textarea>
+
+                    <label>Alerta</label>
+                    <textarea name="alerta"></textarea>
+                </form>
+
+                <button type="button" class="btn cerrarBtn" style="margin-top:8px">Cerrar registro</button>
+            `;
+
+            // Mostrar/ocultar campo motivo otro
+            const motivoSelect = card.querySelector('.motivo-contacto');
+            const motivoExtra = card.querySelector('.motivo-extra');
+            motivoSelect.addEventListener('change', () => {
+                if (motivoSelect.value === 'Otro') {
+                    motivoExtra.classList.remove('hidden');
+                } else {
+                    motivoExtra.classList.add('hidden');
+                    motivoExtra.value = '';
+                }
+            });
+
+            // Guardar y cerrar registro
+            card.querySelector('.cerrarBtn').addEventListener('click', async () => {
+                const f = card.querySelector('.visitaForm');
+
+                const insert = {
+                    gira_visita_id: f.dataset.id,
+                    tipo_gira: parseInt(f.querySelector('[name="tipo_gira"]').value) || null,
+                    medio_contacto: Array.from(f.querySelectorAll('input[name="medio_contacto"]:checked'))
+                                .map(cb => cb.value)
+                                .join(', ') || null,
+                    tiempo_visita: parseInt(f.querySelector('[name="tiempo_visita"]').value) || null,
+                    motivo_contacto: (() => {
+                        const motivo = f.querySelector('[name="motivo_contacto"]').value;
+                        if (motivo === 'Otro') {
+                            return `Otro: ${f.querySelector('[name="motivo_otro"]').value}`;
+                        }
+                        return motivo || null;
+                    })(),
+                    nota_pedido: f.querySelector('[name="nota_pedido"]').value === 'true',
+                    monto_vendido: f.querySelector('[name="monto_vendido"]').value
+                        ? parseFloat(f.querySelector('[name="monto_vendido"]').value)
+                        : null,
+                    cliente_tenia_deuda: f.querySelector('[name="cliente_tenia_deuda"]').value === 'true',
+                    deuda_cobrada: f.querySelector('[name="deuda_cobrada"]').value === 'true',
+                    monto_cobrado: f.querySelector('[name="monto_cobrado"]').value
+                        ? parseFloat(f.querySelector('[name="monto_cobrado"]').value)
+                        : null,
+                    comentario: f.querySelector('[name="comentario"]').value || null,
+                    alerta: f.querySelector('[name="alerta"]').value || null
+                };
+
+                const { error: insertErr } = await supabase.from('gira_respuestas').insert(insert);
+                if (insertErr) {
+                    showToast('❌ Error guardando registro: ' + insertErr.message, 'err');
+                    return;
+                }
+
+                const { error: cerrarErr } = await supabase
+                    .from('gira_visitas')
+                    .update({ cerrado: true })
+                    .eq('id', f.dataset.id);
+
+                if (cerrarErr) {
+                    showToast('❌ Error al cerrar registro: ' + cerrarErr.message, 'err');
+                    return;
+                }
+
+                showToast('✅ Registro guardado y cerrado', 'ok');
+                card.remove();
+            });
+
+            contenedor.appendChild(card);
+        });
     }
 
-    data.forEach(v => {
-        document.addEventListener('change', function (e) {
-            if (e.target.classList.contains('motivo-contacto')) {
-                const inputOtro = e.target.nextElementSibling;
-                if (e.target.value === 'Otro') {
-                    inputOtro.classList.remove('hidden');
-                } else {
-                    inputOtro.classList.add('hidden');
-                    inputOtro.value = '';
-                }
-            }
-        });
+    // Botón para agregar nueva visita/cliente
+    const btnAgregar = document.createElement('button');
+    btnAgregar.className = 'btn';
+    btnAgregar.textContent = '➕ Agregar cliente';
+    btnAgregar.onclick = () => {
+        const nuevaCard = crearVisitaCard(giraId);
+        contenedor.insertBefore(nuevaCard, btnAgregar);
+    };
+    contenedor.appendChild(btnAgregar);
 
-        const card = document.createElement('div');
-        card.className = 'rowCard';
-        card.dataset.visitaId = v.id;
-        card.innerHTML = `
-            <h2>${v.clientes?.nombre || 'Sin nombre'}</h2>
-            <form class="form-grid visitaForm" data-id="${v.id}">
+    // Botón volver
+    const btnVolver = document.createElement('button');
+    btnVolver.className = 'btn-ghost';
+    btnVolver.textContent = '⬅ Volver a giras';
+    btnVolver.onclick = cargarGirasDelVendedor;
+    contenedor.appendChild(btnVolver);
+}
+
+// ===============================
+// Card para nueva visita
+// ===============================
+function crearVisitaCard(giraId) {
+    const opcionesClientes = clientesLista
+        .map(c => `<option value="${c.id}">${c.nombre}</option>`)
+        .join('');
+
+    const card = document.createElement('div');
+    card.className = 'rowCard';
+    card.innerHTML = `
+        <h2>Nueva visita</h2>
+        <form class="form-grid visitaForm">
+            
+            <!-- Selector cliente -->
+            <label class="full-width">
+                <select name="cliente_id" class="cliente-select">
+                    <option value="">-- Seleccionar cliente --</option>
+                    ${opcionesClientes}
+                </select>
+            </label>
+
+            <!-- Checkbox cliente nuevo -->
+            <label>Cliente nuevo</label>
+            <label class="switch">
+                <input type="checkbox" name="es_cliente_nuevo">
+                <span class="slider"></span>
+            </label>
+
+            <!-- Campos formulario cliente existente -->
+            <div class="campos-existente">
                 <label>Tipo de gira</label>
                 <select name="tipo_gira">
                     <option value="">-- Seleccionar --</option>
@@ -309,10 +474,7 @@ async function cargarVisitasDeGira(giraId) {
                     <option value="Cobrar">Cobrar</option>
                     <option value="Otro">Otro</option>
                 </select>
-
-                <div id="otroMotivoWrapper" class="hidden motivo-extra">
-                    <input type="text" name="motivo_otro" placeholder="Describa el motivo" />
-                </div>
+                <input type="text" name="motivo_otro" class="hidden motivo-extra" placeholder="Describa el motivo" />
 
                 <label>¿Nota de pedido?</label>
                 <select name="nota_pedido">
@@ -343,70 +505,166 @@ async function cargarVisitasDeGira(giraId) {
 
                 <label>Alerta</label>
                 <textarea name="alerta"></textarea>
-            </form>
+            </div>
 
-            <button type="button" class="btn cerrarBtn" style="margin-top:8px">Cerrar registro</button>
-        `;
+            <!-- Campos formulario cliente nuevo -->
+            <div class="campos-nuevo hidden">
+                <label>Razón social del local</label>
+                <input type="text" name="razon_social" />
 
-        card.querySelector('.cerrarBtn').addEventListener('click', async () => {
-            const f = card.querySelector('.visitaForm');
+                <label>Localidad del cliente potencial</label>
+                <input type="text" name="localidad" />
 
-            const insert = {
-                gira_visita_id: f.dataset.id,
-                tipo_gira: parseInt(f.querySelector('[name="tipo_gira"]').value) || null,
-                medio_contacto: Array.from(f.querySelectorAll('input[name="medio_contacto"]:checked'))
-                            .map(cb => cb.value)
-                            .join(', ') || null,
-                tiempo_visita: parseInt(f.querySelector('[name="tiempo_visita"]').value) || null,
-                motivo_contacto: (() => {
-                    const motivo = f.querySelector('[name="motivo_contacto"]').value;
-                    if (motivo === 'Otro') {
-                        return `Otro: ${f.querySelector('[name="motivo_otro"]').value}`;
-                    }
-                    return motivo || null;
-                })(),
-                nota_pedido: f.querySelector('[name="nota_pedido"]').value === 'true',
-                monto_vendido: f.querySelector('[name="monto_vendido"]').value
-                    ? parseFloat(f.querySelector('[name="monto_vendido"]').value)
-                    : null,
-                cliente_tenia_deuda: f.querySelector('[name="cliente_tenia_deuda"]').value === 'true',
-                deuda_cobrada: f.querySelector('[name="deuda_cobrada"]').value === 'true',
-                monto_cobrado: f.querySelector('[name="monto_cobrado"]').value
-                    ? parseFloat(f.querySelector('[name="monto_cobrado"]').value)
-                    : null,
-                comentario: f.querySelector('[name="comentario"]').value || null,
-                alerta: f.querySelector('[name="alerta"]').value || null
-            };
+                <label>¿Cómo fue el contacto con este cliente?</label>
+                <input type="text" name="contacto" />
 
-            const { error: insertErr } = await supabase.from('gira_respuestas').insert(insert);
-            if (insertErr) {
-                showToast('❌ Error guardando registro: ' + insertErr.message, 'err');
-                return;
-            }
+                <label>Nombre y apellido del cliente potencial</label>
+                <input type="text" name="nombre_apellido" />
 
-            const { error: cerrarErr } = await supabase
-                .from('gira_visitas')
-                .update({ cerrado: true })
-                .eq('id', f.dataset.id);
+                <label>Teléfono del cliente potencial</label>
+                <input type="text" name="telefono" />
 
-            if (cerrarErr) {
-                showToast('❌ Error al cerrar registro: ' + cerrarErr.message, 'err');
-                return;
-            }
+                <label>Ubicación</label>
+                <input type="text" name="ubicacion" />
 
-            showToast('✅ Registro guardado y cerrado', 'ok');
-            card.remove();
-        });
+                <label>Vidriera</label>
+                <input type="text" name="vidriera" />
 
-        contenedor.appendChild(card);
+                <label>Manejo de marcas de la competencia</label>
+                <input type="text" name="marcas_competencia" />
+
+                <label>¿Le presentaste propuesta de negocio?</label>
+                <select name="propuesta">
+                    <option value="true">Sí</option>
+                    <option value="false">No</option>
+                </select>
+
+                <label>Monto potencial estimado</label>
+                <input type="number" name="monto_potencial" placeholder="Sólo el número, sin puntos ni $" />
+
+                <label>Comentario</label>
+                <textarea name="comentario"></textarea>
+
+                <label>Alerta</label>
+                <textarea name="alerta"></textarea>
+            </div>
+        </form>
+
+        <button type="button" class="btn cerrarBtn" style="margin-top:8px">Cerrar registro</button>
+    `;
+
+    const chkNuevo = card.querySelector('[name="es_cliente_nuevo"]');
+    const selCliente = card.querySelector('[name="cliente_id"]');
+    const camposExistente = card.querySelector('.campos-existente');
+    const camposNuevo = card.querySelector('.campos-nuevo');
+
+    chkNuevo.addEventListener('change', () => {
+        if (chkNuevo.checked) {
+            selCliente.disabled = true;
+            camposExistente.classList.add('hidden');
+            camposNuevo.classList.remove('hidden');
+        } else {
+            selCliente.disabled = false;
+            camposExistente.classList.remove('hidden');
+            camposNuevo.classList.add('hidden');
+        }
     });
 
-    const btnVolver = document.createElement('button');
-    btnVolver.className = 'btn-ghost';
-    btnVolver.textContent = '⬅ Volver a giras';
-    btnVolver.onclick = cargarGirasDelVendedor;
-    contenedor.appendChild(btnVolver);
+    // Mostrar campo "otro motivo" (solo para existente)
+    const motivoSelect = card.querySelector('.motivo-contacto');
+    const motivoExtra = card.querySelector('.motivo-extra');
+    if (motivoSelect) {
+        motivoSelect.addEventListener('change', () => {
+            if (motivoSelect.value === 'Otro') {
+                motivoExtra.classList.remove('hidden');
+            } else {
+                motivoExtra.classList.add('hidden');
+                motivoExtra.value = '';
+            }
+        });
+    }
+
+    // Guardar visita (igual que antes)
+   // Dentro del evento cerrarBtn
+// Guardar visita
+// Guardar visita
+card.querySelector('.cerrarBtn').addEventListener('click', async () => {
+    let clienteIdFinal = selCliente.value;
+
+    // Si es cliente nuevo, lo creo primero en clientes
+    if (chkNuevo.checked) {
+        const nombreNuevo = f.querySelector('[name="razon_social"]').value.trim();
+        if (!nombreNuevo) {
+            showToast('⚠ Ingresá razón social del cliente', 'err');
+            return;
+        }
+        const { data: nuevoCliente, error: clienteErr } = await supabase
+            .from('clientes')
+            .insert({ nombre: nombreNuevo, vendedor_id: currentVendedorId, activo: true })
+            .select('id, nombre')
+            .single();
+        if (clienteErr) {
+            showToast('❌ Error creando cliente: ' + clienteErr.message, 'err');
+            return;
+        }
+        clientesLista.push(nuevoCliente);
+        clienteIdFinal = nuevoCliente.id;
+    }
+
+    // Inserto en gira_visitas
+    const { data: visitaInsert, error: visErr } = await supabase
+        .from('gira_visitas')
+        .insert({
+            gira_id: giraId,
+            cliente_id: clienteIdFinal,
+            motivo: "Vincular",
+            cerrado: true
+        })
+        .select('id')
+        .single();
+
+    if (visErr) {
+        showToast('❌ Error guardando visita: ' + visErr.message, 'err');
+        return;
+    }
+
+    // Armar objeto para gira_respuestas
+    const f = card.querySelector('.visitaForm');
+    const respuestasObj = {
+        
+        razon_social: f.querySelector('[name="razon_social"]')?.value || null,
+        localidad: f.querySelector('[name="localidad"]')?.value || null,
+        contacto_cliente: f.querySelector('[name="contacto"]')?.value || null,
+        nombre_apellido: f.querySelector('[name="nombre_apellido"]')?.value || null,
+        telefono: f.querySelector('[name="telefono"]')?.value || null,
+        ubicacion: f.querySelector('[name="ubicacion"]')?.value || null,
+        vidriera: f.querySelector('[name="vidriera"]')?.value || null,
+        marcas_competencia: f.querySelector('[name="marcas_competencia"]')?.value || null,
+        propuesta_negocio: f.querySelector('[name="propuesta"]')?.value === "true",
+        monto_potencial: f.querySelector('[name="monto_potencial"]')?.value || null
+    };
+
+    // Insertar en gira_respuestas
+    const { error: respErr } = await supabase
+        .from('gira_respuestas')
+        .insert([respuestasObj]);
+
+    if (respErr) {
+        showToast('⚠ Error guardando respuestas: ' + respErr.message, 'err');
+    }
+
+    showToast('✅ Visita agregada', 'ok');
+    card.remove();
+    await cargarVisitasDeGira(giraId);
+});
+
+
+
+    return card;
 }
+
+
+
 
 async function guardarRegistroVisitas() {
     const formularios = document.querySelectorAll('.visitaForm');
