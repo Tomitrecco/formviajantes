@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Giras · App</title>
   <link rel="stylesheet" href="styles.css">
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icono.png">
+  <link rel="apple-touch-icon" href="assets/icono.png">
+
 </head>
 <body>
 
@@ -51,6 +55,7 @@
   <div style="display:flex; gap:8px; margin-bottom:16px">
     <button id="tab-armado" class="btn">Armado de gira</button>
     <button id="tab-registro" class="btn-ghost">Registro de gira</button>
+    <button id="tab-cerradas" class="btn-ghost">Giras cerradas</button>
   </div>
 
   <!-- Armado de gira -->
@@ -100,8 +105,15 @@
   </div>
 
   <div class="sep"></div>
+  <div id="section-cerradas" class="hidden">
+    <div id="girasCerradasList"></div>
+  </div>
   <button class="btn-ghost" id="logoutBtn">Cerrar sesión</button>
+
+
 </section>
+
+
 
 <!-- Plantilla HTML que usará crearVisitaCard() -->
 <template id="nueva-visita-template">

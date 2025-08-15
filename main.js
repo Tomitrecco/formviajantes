@@ -15,25 +15,53 @@ function setAuthMode(m) { m === 'login' ? (show($('#loginForm')), hide($('#signu
 function go(v) { v === 'home' ? (hide($('#view-auth')), show($('#view-home'))) : (show($('#view-auth')), hide($('#view-home'))); }
 
 // --- Pestañas ---
+// --- Pestañas ---
 function showArmado() {
     $('#section-armado').classList.remove('hidden');
     $('#section-registro').classList.add('hidden');
+    $('#section-cerradas').classList.add('hidden'); // 🔹 ocultar giras cerradas
+
     $('#tab-armado').classList.add('btn');
     $('#tab-armado').classList.remove('btn-ghost');
     $('#tab-registro').classList.remove('btn');
     $('#tab-registro').classList.add('btn-ghost');
+    $('#tab-cerradas').classList.remove('btn');
+    $('#tab-cerradas').classList.add('btn-ghost');
 }
+
 function showRegistro() {
     $('#section-armado').classList.add('hidden');
     $('#section-registro').classList.remove('hidden');
+    $('#section-cerradas').classList.add('hidden'); // 🔹 ocultar giras cerradas
+
     $('#tab-registro').classList.add('btn');
     $('#tab-registro').classList.remove('btn-ghost');
     $('#tab-armado').classList.remove('btn');
     $('#tab-armado').classList.add('btn-ghost');
+    $('#tab-cerradas').classList.remove('btn');
+    $('#tab-cerradas').classList.add('btn-ghost');
+
     cargarGirasDelVendedor();
 }
+
+function showCerradas() {
+    $('#section-armado').classList.add('hidden');
+    $('#section-registro').classList.add('hidden');
+    $('#section-cerradas').classList.remove('hidden');
+
+    $('#tab-cerradas').classList.add('btn');
+    $('#tab-cerradas').classList.remove('btn-ghost');
+    $('#tab-armado').classList.remove('btn');
+    $('#tab-armado').classList.add('btn-ghost');
+    $('#tab-registro').classList.remove('btn');
+    $('#tab-registro').classList.add('btn-ghost');
+
+    cargarGirasCerradas();
+}
+
 $('#tab-armado').onclick = showArmado;
 $('#tab-registro').onclick = showRegistro;
+$('#tab-cerradas').onclick = showCerradas;
 
 // --- Lógica de negocio ---
 async function ensureVendedorProfile(user) {
@@ -203,7 +231,7 @@ async function cargarGirasDelVendedor() {
             .join(', ');
 
         const tarjeta = document.createElement('div');
-        tarjeta.className = 'rowCard';
+        tarjeta.className = 'card';
         tarjeta.innerHTML = `
             <h3>${gira.nombre || 'Sin nombre'}</h3>
             <p><strong>Desde:</strong> ${gira.fecha_desde} &nbsp; <strong>Hasta:</strong> ${gira.fecha_hasta}</p>
@@ -241,6 +269,52 @@ function showToast(message, type = 'ok') {
         setTimeout(() => toast.remove(), 300);
     }, 2000);
 }
+async function cargarGirasCerradas() {
+    const { data, error } = await supabase
+        .from('giras')
+        .select(`
+            id,
+            nombre,
+            fecha_desde,
+            fecha_hasta,
+            gira_visitas(
+                clientes(nombre)
+            )
+        `)
+        .eq('vendedor_id', currentVendedorId)
+        .eq('estado', 'cerrada')
+        .order('fecha_desde', { ascending: false });
+
+    const contenedor = $('#girasCerradasList');
+    contenedor.innerHTML = '';
+
+    if (error) {
+        contenedor.innerHTML = `<p class="msg err">Error: ${error.message}</p>`;
+        return;
+    }
+
+    if (!data || !data.length) {
+        contenedor.innerHTML = '<p class="muted">No hay giras cerradas.</p>';
+        return;
+    }
+
+    data.forEach(gira => {
+        const clientes = gira.gira_visitas
+            .map(v => v.clientes?.nombre || 'Sin nombre')
+            .join(', ');
+
+        const tarjeta = document.createElement('div');
+        tarjeta.className = 'rowCard';
+        tarjeta.innerHTML = `
+            <h3>${gira.nombre || 'Sin nombre'}</h3>
+            <p><strong>Desde:</strong> ${gira.fecha_desde} &nbsp; <strong>Hasta:</strong> ${gira.fecha_hasta}</p>
+            <p><strong>Clientes:</strong> ${clientes || 'Sin clientes asignados'}</p>
+            <button class="btn" onclick="verGiraCerrada('${gira.id}')">Ver detalles</button>
+        `;
+        contenedor.appendChild(tarjeta);
+    });
+}
+
 
 function mapTipoGira(valor) {
     switch (valor) {
@@ -449,6 +523,64 @@ async function cargarVisitasDeGira(giraId) {
     btnVolver.onclick = cargarGirasDelVendedor;
     contenedor.appendChild(btnVolver);
 }
+async function verGiraCerrada(giraId) {
+    const { data, error } = await supabase
+        .from('gira_visitas')
+        .select(`
+            id,
+            clientes(nombre),
+            gira_respuestas(
+                tipo_gira,
+                medio_contacto,
+                tiempo_visita,
+                motivo_contacto,
+                nota_pedido,
+                monto_vendido,
+                cliente_tenia_deuda,
+                deuda_cobrada,
+                monto_cobrado,
+                comentario,
+                alerta
+            )
+        `)
+        .eq('gira_id', giraId);
+
+    const contenedor = $('#girasCerradasList');
+    contenedor.innerHTML = `<button class="btn-ghost" onclick="cargarGirasCerradas()">⬅ Volver</button>`;
+
+    if (error) {
+        contenedor.innerHTML += `<p class="msg err">Error: ${error.message}</p>`;
+        return;
+    }
+
+    if (!data || !data.length) {
+        contenedor.innerHTML += '<p class="muted">No hay visitas registradas para esta gira.</p>';
+        return;
+    }
+
+    data.forEach(visita => {
+        const r = visita.gira_respuestas?.[0] || {};
+        const card = document.createElement('div');
+        card.className = 'rowCard';
+        card.innerHTML = `
+            <h4>${visita.clientes?.nombre || 'Sin cliente'}</h4>
+            <p><strong>Tipo de gira:</strong> ${r.tipo_gira || '-'}</p>
+            <p><strong>Medio de contacto:</strong> ${r.medio_contacto || '-'}</p>
+            <p><strong>Tiempo visita:</strong> ${r.tiempo_visita || '-'} min</p>
+            <p><strong>Motivo:</strong> ${r.motivo_contacto || '-'}</p>
+            <p><strong>Nota de pedido:</strong> ${r.nota_pedido ? 'Sí' : 'No'}</p>
+            <p><strong>Monto vendido:</strong> ${r.monto_vendido ?? '-'}</p>
+            <p><strong>Cliente tenía deuda:</strong> ${r.cliente_tenia_deuda ? 'Sí' : 'No'}</p>
+            <p><strong>Deuda cobrada:</strong> ${r.deuda_cobrada ? 'Sí' : 'No'}</p>
+            <p><strong>Monto cobrado:</strong> ${r.monto_cobrado ?? '-'}</p>
+            <p><strong>Comentario:</strong> ${r.comentario || '-'}</p>
+            <p><strong>Alerta:</strong> ${r.alerta || '-'}</p>
+        `;
+        contenedor.appendChild(card);
+    });
+}
+
+
 
 // ===============================
 // Card para nueva visita
