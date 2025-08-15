@@ -240,6 +240,16 @@ function showToast(message, type = 'ok') {
     }, 2000);
 }
 
+function mapTipoGira(valor) {
+    switch (valor) {
+        case "0": return "Sin gira";
+        case "1": return "Gira corta";
+        case "2": return "Gira larga";
+        default: return null;
+    }
+}
+
+
 async function cargarVisitasDeGira(giraId) {
     const { data, error } = await supabase
         .from('gira_visitas')
@@ -349,7 +359,7 @@ async function cargarVisitasDeGira(giraId) {
 
                 const insert = {
                     gira_visita_id: f.dataset.id,
-                    tipo_gira: parseInt(f.querySelector('[name="tipo_gira"]').value) || null,
+                    tipo_gira: mapTipoGira(f.querySelector('[name="tipo_gira"]').value),
                     medio_contacto: Array.from(f.querySelectorAll('input[name="medio_contacto"]:checked'))
                                 .map(cb => cb.value)
                                 .join(', ') || null,
@@ -589,9 +599,10 @@ function crearVisitaCard(giraId) {
 // Guardar visita
 // Guardar visita
 card.querySelector('.cerrarBtn').addEventListener('click', async () => {
+    const f = card.querySelector('.visitaForm'); // 🔹 Mover aquí arriba
+
     let clienteIdFinal = selCliente.value;
 
-    // Si es cliente nuevo, lo creo primero en clientes
     if (chkNuevo.checked) {
         const nombreNuevo = f.querySelector('[name="razon_social"]').value.trim();
         if (!nombreNuevo) {
@@ -628,21 +639,67 @@ card.querySelector('.cerrarBtn').addEventListener('click', async () => {
         return;
     }
 
-    // Armar objeto para gira_respuestas
-    const f = card.querySelector('.visitaForm');
-    const respuestasObj = {
-        
-        razon_social: f.querySelector('[name="razon_social"]')?.value || null,
-        localidad: f.querySelector('[name="localidad"]')?.value || null,
-        contacto_cliente: f.querySelector('[name="contacto"]')?.value || null,
-        nombre_apellido: f.querySelector('[name="nombre_apellido"]')?.value || null,
-        telefono: f.querySelector('[name="telefono"]')?.value || null,
-        ubicacion: f.querySelector('[name="ubicacion"]')?.value || null,
-        vidriera: f.querySelector('[name="vidriera"]')?.value || null,
-        marcas_competencia: f.querySelector('[name="marcas_competencia"]')?.value || null,
-        propuesta_negocio: f.querySelector('[name="propuesta"]')?.value === "true",
-        monto_potencial: f.querySelector('[name="monto_potencial"]')?.value || null
-    };
+        // Armar objeto para gira_respuestas
+    let comentarioValor = null;
+    let alertaValor = null;
+
+    if (chkNuevo.checked) {
+        comentarioValor = camposNuevo.querySelector('[name="comentario"]').value || null;
+        alertaValor = camposNuevo.querySelector('[name="alerta"]').value || null;
+    } else {
+        comentarioValor = camposExistente.querySelector('[name="comentario"]').value || null;
+        alertaValor = camposExistente.querySelector('[name="alerta"]').value || null;
+    }
+
+    let respuestasObj = { gira_visita_id: visitaInsert.id };
+
+    if (chkNuevo.checked) {
+        // Cliente nuevo → leer de campos-nuevo
+        respuestasObj = {
+            ...respuestasObj,
+            razon_social: camposNuevo.querySelector('[name="razon_social"]').value || null,
+            localidad: camposNuevo.querySelector('[name="localidad"]').value || null,
+            contacto_cliente: camposNuevo.querySelector('[name="contacto"]').value || null,
+            nombre_apellido: camposNuevo.querySelector('[name="nombre_apellido"]').value || null,
+            telefono: camposNuevo.querySelector('[name="telefono"]').value || null,
+            ubicacion: camposNuevo.querySelector('[name="ubicacion"]').value || null,
+            vidriera: camposNuevo.querySelector('[name="vidriera"]').value || null,
+            marcas_competencia: camposNuevo.querySelector('[name="marcas_competencia"]').value || null,
+            propuesta_negocio: camposNuevo.querySelector('[name="propuesta"]').value === "true",
+            monto_potencial: camposNuevo.querySelector('[name="monto_potencial"]').value || null,
+            comentario: camposNuevo.querySelector('[name="comentario"]').value || null,
+            alerta: camposNuevo.querySelector('[name="alerta"]').value || null
+        };
+    } else {
+        // Cliente existente → leer de campos-existente
+        respuestasObj = {
+            ...respuestasObj,
+            tipo_gira: mapTipoGira(camposExistente.querySelector('[name="tipo_gira"]').value),
+            medio_contacto: Array.from(camposExistente.querySelectorAll('input[name="medio_contacto"]:checked'))
+                .map(cb => cb.value)
+                .join(', ') || null,
+            tiempo_visita: parseInt(camposExistente.querySelector('[name="tiempo_visita"]').value) || null,
+            motivo_contacto: (() => {
+                const motivo = camposExistente.querySelector('[name="motivo_contacto"]').value;
+                if (motivo === 'Otro') {
+                    return `Otro: ${camposExistente.querySelector('[name="motivo_otro"]').value}`;
+                }
+                return motivo || null;
+            })(),
+            nota_pedido: camposExistente.querySelector('[name="nota_pedido"]').value === 'true',
+            monto_vendido: camposExistente.querySelector('[name="monto_vendido"]').value
+                ? parseFloat(camposExistente.querySelector('[name="monto_vendido"]').value)
+                : null,
+            cliente_tenia_deuda: camposExistente.querySelector('[name="cliente_tenia_deuda"]').value === 'true',
+            deuda_cobrada: camposExistente.querySelector('[name="deuda_cobrada"]').value === 'true',
+            monto_cobrado: camposExistente.querySelector('[name="monto_cobrado"]').value
+                ? parseFloat(camposExistente.querySelector('[name="monto_cobrado"]').value)
+                : null,
+            comentario: camposExistente.querySelector('[name="comentario"]').value || null,
+            alerta: camposExistente.querySelector('[name="alerta"]').value || null
+        };
+    }
+
 
     // Insertar en gira_respuestas
     const { error: respErr } = await supabase
@@ -657,7 +714,6 @@ card.querySelector('.cerrarBtn').addEventListener('click', async () => {
     card.remove();
     await cargarVisitasDeGira(giraId);
 });
-
 
 
     return card;
