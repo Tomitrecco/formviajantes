@@ -174,3 +174,57 @@ input:checked + .slider:before {
 .campos-nuevo {
   display: contents; /* hace que sus hijos usen el grid del padre */
 }
+/* =======================
+   Ajustes responsive
+   ======================= */
+@media (max-width: 600px) {
+
+  /* Formularios y grids a 1 columna */
+  .row,
+  .row-3,
+  .form-grid,
+  .medios-contacto {
+    display: block !important;
+  }
+
+  .row > *,
+  .row-3 > *,
+  .form-grid > *,
+  .medios-contacto > * {
+    width: 100% !important;
+    margin-bottom: 12px;
+  }
+
+  /* Pestañas: que se acomoden vertical o en varias líneas */
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tabs .tab {
+    flex: 1 1 100%;
+    text-align: center;
+  }
+
+  /* Botones a ancho completo */
+  button,
+  .btn,
+  .btn-ghost {
+    width: 100%;
+    display: block;
+    text-align: center;
+  }
+
+  /* Ajustar padding y tipografía para móvil */
+  .card,
+  .rowCard {
+    padding: 12px !important;
+  }
+
+  body {
+    font-size: 16px;
+    padding: 8px;
+  }
+}
+

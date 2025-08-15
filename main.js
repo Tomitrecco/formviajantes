@@ -179,7 +179,9 @@ async function cargarGirasDelVendedor() {
                 clientes(nombre)
             )
         `)
+
         .eq('vendedor_id', currentVendedorId)
+        .eq('estado', 'activa')
         .order('fecha_desde', { ascending: false });
 
     const contenedor = document.getElementById('registroVisitasList');
@@ -417,6 +419,28 @@ async function cargarVisitasDeGira(giraId) {
         contenedor.insertBefore(nuevaCard, btnAgregar);
     };
     contenedor.appendChild(btnAgregar);
+     // 🔹 Botón cerrar gira
+    const btnCerrarGira = document.createElement('button');
+    btnCerrarGira.className = 'btn btn-danger';
+    btnCerrarGira.style.marginTop = '8px';
+    btnCerrarGira.textContent = '🚫 Cerrar gira';
+    btnCerrarGira.onclick = async () => {
+        if (!confirm('¿Seguro que querés cerrar esta gira?')) return;
+
+        const { error } = await supabase
+            .from('giras')
+            .update({ estado: 'cerrada' })
+            .eq('id', giraId);
+
+        if (error) {
+            showToast('❌ Error al cerrar la gira: ' + error.message, 'err');
+            return;
+        }
+
+        showToast('✅ Gira cerrada', 'ok');
+        await cargarGirasDelVendedor();
+    };
+    contenedor.appendChild(btnCerrarGira);
 
     // Botón volver
     const btnVolver = document.createElement('button');
