@@ -867,11 +867,16 @@ card.querySelector('.cerrarBtn').addEventListener('click', async () => {
     } else {
         // 🔹 También lo enviamos a Google Sheets
         try {
+            console.log("🔄 Enviando datos a Google Sheets...", respuestasObj);
+
             await fetch("https://script.google.com/macros/s/AKfycbx8wnoroPhJl6bdQnz_mJwOnYe7Zn3qFAu1P26wsLHIcm-MhRoifqxKlMh_JXW64JU/exec", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(respuestasObj)
+                
             });
+
+            console.log("✅ Solicitud enviada");
         } catch (e) {
             console.error("Error enviando a Google Sheets", e);
         }
