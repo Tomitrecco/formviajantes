@@ -864,11 +864,23 @@ card.querySelector('.cerrarBtn').addEventListener('click', async () => {
 
     if (respErr) {
         showToast('⚠ Error guardando respuestas: ' + respErr.message, 'err');
+    } else {
+        // 🔹 También lo enviamos a Google Sheets
+        try {
+            await fetch("https://script.google.com/macros/s/AKfycbx8wnoroPhJl6bdQnz_mJwOnYe7Zn3qFAu1P26wsLHIcm-MhRoifqxKlMh_JXW64JU/exec", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(respuestasObj)
+            });
+        } catch (e) {
+            console.error("Error enviando a Google Sheets", e);
+        }
     }
 
     showToast('✅ Visita agregada', 'ok');
     card.remove();
     await cargarVisitasDeGira(giraId);
+
 });
 
 
