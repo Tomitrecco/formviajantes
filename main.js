@@ -871,9 +871,10 @@ card.querySelector('.cerrarBtn').addEventListener('click', async () => {
 
             await fetch("https://script.google.com/macros/s/AKfycbx8wnoroPhJl6bdQnz_mJwOnYe7Zn3qFAu1P26wsLHIcm-MhRoifqxKlMh_JXW64JU/exec", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(respuestasObj)
-                
+                headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: toFormData(respuestasObj)
             });
 
             console.log("✅ Solicitud enviada");
