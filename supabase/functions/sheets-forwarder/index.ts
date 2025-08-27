@@ -2,14 +2,17 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*", // en prod poné tu dominio
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  // en prod, podés ser específico:
+  // "Access-Control-Allow-Origin": "https://tomitrecco.github.io",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS, HEAD",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-api-version",
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS" || req.method === "HEAD") {
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {

@@ -20,13 +20,28 @@ function go(v) { v === 'home' ? (hide($('#view-auth')), show($('#view-home'))) :
 ============================ */
 async function enviarFilaAGoogleSheets(payload) {
   try {
-    const { data, error } = await supabase.functions.invoke("sheets-forwarder", { body: payload });
-    if (error) console.error("Error sheets-forwarder:", error);
-    else console.log("Sheets OK:", data);
+    // Tomamos el token del usuario si está logueado; si no, usamos el anon key
+    const { data: s } = await supabase.auth.getSession();
+    const jwt = s?.session?.access_token || SUPABASE_ANON_KEY;
+
+    const { data, error } = await supabase.functions.invoke("sheets-forwarder", {
+      body: payload,
+      headers: {
+        Authorization: `Bearer ${jwt}`,   // 👈 obligatorio
+        apikey: SUPABASE_ANON_KEY         // 👈 opcional (el SDK suele ponerlo)
+      }
+    });
+
+    if (error) {
+      console.error("Error sheets-forwarder:", error);
+    } else {
+      console.log("Sheets OK:", data);
+    }
   } catch (e) {
     console.error("Excepción sheets-forwarder:", e);
   }
 }
+
 
 function mapRespuestasAPlanilla(r) {
   return {
