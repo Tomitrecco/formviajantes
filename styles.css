@@ -233,3 +233,226 @@ input:checked + .slider:before {
   
 }
 
+/* ===== Sidebar Prioridades ===== */
+body.with-sidebar { padding-right: 340px; }
+.sidebar {
+  position: fixed; top: 0; right: 0; width: 320px; height: 100vh;
+  background: #fff; border-left: 1px solid #e5e7eb; box-shadow: -4px 0 12px rgba(0,0,0,.06);
+  z-index: 1000; display: flex; flex-direction: column;
+}
+.sidebar.hidden { display: none; }
+.sidebar-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 12px; border-bottom: 1px solid #e5e7eb;
+}
+.sidebar-header h3 { margin: 0; font-size: 16px; }
+.sidebar-header .actions { display: flex; gap: 8px; align-items: center; }
+.sidebar-header input[type="search"] {
+  height: 32px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0 8px; font-size: 14px;
+}
+.sidebar-body { padding: 12px; overflow: auto; flex: 1; display: grid; gap: 8px; }
+.pri-item {
+  border: 1px solid #e5e7eb; border-radius: 12px; padding: 10px; display: grid; gap: 6px;
+}
+.pri-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.pri-title { font-weight: 600; }
+.pri-meta { font-size: 12px; color: #64748b; display: flex; gap: 8px; flex-wrap: wrap; }
+.badge {
+  font-size: 11px; border-radius: 999px; padding: 2px 8px; background: #f1f5f9; color: #0f172a;
+}
+.badge.high { background: #fee2e2; color: #b91c1c; }
+.badge.med  { background: #ffedd5; color: #c2410c; }
+.badge.low  { background: #dcfce7; color: #166534; }
+.pri-actions { display: flex; gap: 6px; }
+.pri-actions .btn-ghost { padding: 4px 8px; }
+
+.sidebar-fab {
+  position: fixed; right: 20px; bottom: 20px; z-index: 1001;
+}
+
+/* Responsive: en móviles como "cajón" inferior */
+@media (max-width: 900px) {
+  body.with-sidebar { padding-right: 0; }
+  .sidebar { width: 100%; height: 46vh; top: auto; bottom: 0; right: 0; border-left: 0; border-top: 1px solid #e5e7eb; }
+}
+
+#panel-prioritarios {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 320px;
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.35);
+  z-index: 50;
+}
+
+.priori-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.priori-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.priori-actions button {
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.panel-admin-actions {
+  display: flex;
+  justify-content: center; /* centra horizontalmente */
+  margin-top: 12px;
+}
+/* Estilo general de las tarjetas del dashboard */
+/* Tarjeta principal del vendedor */
+/* ===== Forzar dashboard en UNA columna y a ancho completo ===== */
+#section-dashboard,
+#section-dashboard * { box-sizing: border-box; }
+
+#section-dashboard {
+  width: 100%;
+  max-width: none;
+  padding: 12px;
+}
+
+/* El contenedor de tarjetas (id + clase) pasa a columna única */
+#section-dashboard #dashGrid,
+#section-dashboard .dash-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;  /* ← una sola columna */
+  gap: 20px !important;
+  width: 100%;
+}
+
+/* === DASHBOARD: grid de categorías en columnas, sin tocar HTML === */
+
+/* Card del vendedor como grid de 12 columnas */
+#section-dashboard .dash-card{
+  display:grid;
+  grid-template-columns: repeat(12, minmax(0,1fr));
+  gap:16px;
+}
+
+/* Título y rango a ancho completo */
+#section-dashboard .dash-card > h3,
+#section-dashboard .dash-card > p.muted{
+  grid-column: 1 / -1; /* span completo */
+}
+
+/* Cada categoría ocupa columnas del grid (ajustable por breakpoint) */
+#section-dashboard .dash-card > .kpi-category{
+  grid-column: span 3; /* 4 por fila en pantallas grandes */
+  margin:0 !important;           /* evitamos huecos extra */
+  width:100% !important;
+  display:flex;                  /* mantiene interior en columna */
+  flex-direction:column;
+}
+
+/* 3 por fila (desktop medio) */
+@media (max-width: 1200px){
+  #section-dashboard .dash-card > .kpi-category{ grid-column: span 4; }
+}
+
+/* 2 por fila (tablet) */
+@media (max-width: 900px){
+  #section-dashboard .dash-card > .kpi-category{ grid-column: span 6; }
+}
+
+/* 1 por fila (móvil) */
+@media (max-width: 600px){
+  #section-dashboard .dash-card{
+    grid-template-columns: repeat(12, minmax(0,1fr));
+    gap:12px;
+  }
+  #section-dashboard .dash-card > .kpi-category{ grid-column: 1 / -1; }
+}
+
+/* (Opcional) misma altura visual cuando comparten fila */
+#section-dashboard .kpi-list{ flex:1; }
+
+
+/* Bloques de categoría: uno abajo del otro, ancho completo */
+.kpi-category {
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  width: 100%;           /* forzamos ancho completo dentro de la card */
+  box-sizing: border-box;
+}
+
+/* Título de la categoría */
+.kpi-category h4 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  color: var(--primary);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+/* Lista vertical de métricas */
+.kpi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Cada métrica ocupa ancho completo, con label y valor separados */
+.kpi-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  font-size: 14px;
+}
+
+.kpi-row strong {
+  font-weight: 600;
+  color: #fff;
+}
+/* Contenedor responsive de KPIs dentro de cada categoría */
+#section-dashboard .kpi-wrap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* cambia # por fila según ancho */
+  gap: 12px;
+}
+
+/* Cada “tarjetita” KPI */
+#section-dashboard .kpi-item {
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#section-dashboard .kpi-item .kpi-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+#section-dashboard .kpi-item .kpi-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Ajuste fino en móviles chicos */
+@media (max-width: 420px) {
+  #section-dashboard .kpi-wrap {
+    grid-template-columns: 1fr; /* 1 por fila si la pantalla es muy angosta */
+  }
+}

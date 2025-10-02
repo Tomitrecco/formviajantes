@@ -9,140 +9,266 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/icono.png">
   <link rel="apple-touch-icon" href="assets/icono.png">
 
+  <!-- Estilos mínimos para el panel izquierdo (usa tus variables) -->
+  <style>
+    /* === Panel izquierdo de Prioritarios (usa tus vars) === */
+    #panel-prioritarios{
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 320px;
+      max-height: calc(100dvh - 40px);
+      overflow: auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.35);
+      z-index: 50;
+    }
+    #panel-prioritarios .panel-head{
+      display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;
+    }
+    #panel-prioritarios h4{ margin:0; }
+    #panel-prioritarios .panel-body{ display:flex; flex-direction:column; gap:8px; }
+    .priori-item{
+      display:grid; grid-template-columns: 1fr auto auto; gap:8px; align-items:center;
+      border:1px solid var(--border); border-radius:10px; padding:10px;
+      background:#0b1324;
+    }
+    .priori-sku{ font-weight:700; }
+    .priori-orden{ color:var(--muted); font-size:13px; }
+    .panel-admin{ margin-top:12px; border-top:1px dashed var(--border); padding-top:10px; }
+    .panel-admin-actions{ display:flex; justify-content:center; margin-top:8px; }
+
+    /* Mantener el card centrado aunque esté el panel a la izquierda */
+    @media (max-width: 900px){
+      #panel-prioritarios{ position: static; width:100%; max-height:none; margin:12px 0; }
+    }
+
+    /* Topbar */
+    #topbar{
+      width:min(600px, 100%);
+      margin-bottom:10px;
+      display:flex; justify-content:space-between; align-items:center; gap:8px;
+    }
+
+    /* Dashboard */
+    #section-dashboard .dash-grid{
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px;
+    }
+    .dash-card{
+      border:1px solid var(--border); border-radius:10px; padding:12px; background:#0b1324;
+    }
+    .dash-card h3{ margin:0 0 8px; }
+    #dashFilterBar{
+      display:flex; gap:6px; align-items:center; margin:10px 0 14px; flex-wrap:wrap;
+    }
+    #dashFilterBar input, #dashFilterBar select{
+      padding:6px 8px; font-size:13px; width:auto;
+    }
+  </style>
 </head>
 <body>
 
-<!-- Login/Registro -->
-<section id="view-auth" class="card">
-  <h1 id="auth-title">Iniciar sesión</h1>
-  <p id="auth-sub">Usá tu email y contraseña.</p>
-
-  <!-- Login -->
-  <form id="loginForm">
-    <label>Email</label>
-    <input id="log_email" type="email" required>
-    <label>Contraseña</label>
-    <input id="log_pass" type="password" required>
-    <div style="display:flex; gap:12px; margin-top:16px">
-      <button class="btn" type="submit">Ingresar</button>
-      <button class="btn-ghost" type="button" id="goToSignup">Crear cuenta</button>
+  <!-- ========== Panel izquierdo: Artículos prioritarios (fuera del section) ========== -->
+  <aside id="panel-prioritarios" class="hidden">
+    <div class="panel-head">
+      <h4>Artículos prioritarios</h4>
+      <small class="muted">Semanales</small>
     </div>
-    <div id="loginMsg" class="msg"></div>
-  </form>
 
-  <!-- Signup -->
-  <form id="signupForm" class="hidden">
-    <div class="row">
-      <div><label>Nombre vendedor</label><input id="reg_name" type="text" required></div>
-      <div><label>Apellido vendedor</label><input id="reg_last" type="text" required></div>
+    <div id="prioritariosList" class="panel-body"></div>
+
+    <!-- Form admin (solo SKU + Orden) -->
+    <div id="prioritariosAdmin" class="panel-admin hidden">
+      <h5>Gestionar (admin)</h5>
+      <form id="formPrioritario" class="form-grid">
+        <input name="id" type="hidden"/>
+
+        <label>SKU</label>
+        <input name="sku" type="text" placeholder="Ej. 00D61070" required/>
+
+        <label>Orden</label>
+        <input name="orden" type="number" placeholder="1" required/>
+
+        <div class="full-width" style="display:flex; gap:8px;">
+          <button id="btnGuardarPrioritario" class="btn" type="submit">Guardar</button>
+          <button id="btnCancelarPrioritario" class="btn-ghost" type="button">Cancelar</button>
+        </div>
+
+        <p id="prioriMsg" class="msg"></p>
+      </form>
     </div>
-    <label>Email</label><input id="reg_email" type="email" required>
-    <label>Clave</label><input id="reg_pass" type="password" required>
-    <div style="display:flex; gap:12px; margin-top:16px">
-      <button class="btn" type="submit">Crear cuenta</button>
-      <button class="btn-ghost" type="button" id="backToLogin">Volver</button>
+
+    <!-- Acciones (mostrar/ocultar desde JS según rol) -->
+    <div id="panelAdminActions" class="panel-admin-actions hidden">
+      <button id="btnNuevoPrioritario" class="btn-ghost" type="button">➕ Nuevo</button>
     </div>
-    <div id="signupMsg" class="msg"></div>
-  </form>
-</section>
+  </aside>
 
-<!-- Home -->
-<section id="view-home" class="card hidden">
-  <h1>Panel de Giras</h1>
-  <p id="userEmail" class="muted">&nbsp;</p>
-
-  <!-- Selector de pestañas -->
-  <div style="display:flex; gap:8px; margin-bottom:16px">
-    <button id="tab-armado" class="btn">Armado de gira</button>
-    <button id="tab-registro" class="btn-ghost">Registro de gira</button>
-    <button id="tab-cerradas" class="btn-ghost">Giras cerradas</button>
+  <!-- Topbar con botón Dashboard -->
+  <div id="topbar">
+    <div id="userEmail"></div>
+    <button id="btnDashboard" class="btn-ghost">📊 Dashboard</button>
   </div>
 
-  <!-- Armado de gira -->
-  <div id="section-armado">
-    <h2>Armado de gira</h2>
-    <div>
-      <label>Nombre de la gira</label>
-      <input id="nombre_gira" type="text" placeholder="Ej: Gira Zona Norte" required>
-    </div>
-    <div class="row">
-      <div>
-        <label>Fecha desde</label>
-        <input id="fecha_desde" type="date">
-      </div>
-      <div>
-        <label>Fecha hasta</label>
-        <input id="fecha_hasta" type="date">
-      </div>
+  <!-- ===========================
+       Home / App principal
+       =========================== -->
+  <section id="view-home" class="card hidden">
+    <h1>Panel de Giras</h1>
+    <p id="userEmailWelcome" class="muted">&nbsp;</p>
+
+    <!-- Selector de pestañas -->
+    <div style="display:flex; gap:8px; margin-bottom:16px">
+      <button id="tab-armado" class="btn">Armado de gira</button>
+      <button id="tab-registro" class="btn-ghost">Registro de gira</button>
+      <button id="tab-cerradas" class="btn-ghost">Giras cerradas</button>
     </div>
 
-    <div style="margin-top:12px">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
-        <strong>Clientes a visitar</strong>
-        <button id="addVisitaBtn" class="btn-ghost" type="button">+ Agregar</button>
+    <!-- Armado de gira -->
+    <div id="section-armado">
+      <h2>Armado de gira</h2>
+      <div>
+        <label>Nombre de la gira</label>
+        <input id="nombre_gira" type="text" placeholder="Ej: Gira Zona Norte" required>
       </div>
-      <div id="visitasList" style="display:grid; gap:8px"></div>
+      <div class="row">
+        <div>
+          <label>Fecha desde</label>
+          <input id="fecha_desde" type="date">
+        </div>
+        <div>
+          <label>Fecha hasta</label>
+          <input id="fecha_hasta" type="date">
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+          <strong>Clientes a visitar</strong>
+          <button id="addVisitaBtn" class="btn-ghost" type="button">+ Agregar</button>
+        </div>
+        <div id="visitasList" style="display:grid; gap:8px"></div>
+      </div>
+
+      <div style="display:flex; gap:12px; margin-top:16px">
+        <button id="guardarGiraBtn" class="btn">Guardar gira</button>
+        <div id="giraMsg" class="msg"></div>
+      </div>
+
+      <div class="sep"></div>
+      <h3>Agregar cliente nuevo</h3>
+      <div class="row">
+        <div><input id="nuevoClienteNombre" placeholder="Nombre del cliente"></div>
+        <div><button id="btnAgregarCliente" class="btn" type="button">Agregar</button></div>
+      </div>
+      <div id="clienteMsg" class="msg"></div>
     </div>
 
-    <div style="display:flex; gap:12px; margin-top:16px">
-      <button id="guardarGiraBtn" class="btn">Guardar gira</button>
-      <div id="giraMsg" class="msg"></div>
+    <!-- Registro de gira -->
+    <div id="section-registro" class="hidden">
+      <h2>Registro de giras</h2>
+      <div id="registroVisitasList" style="margin-top:12px; display:grid; gap:8px"></div>
     </div>
 
     <div class="sep"></div>
-    <h3>Agregar cliente nuevo</h3>
-    <div class="row">
-      <div><input id="nuevoClienteNombre" placeholder="Nombre del cliente"></div>
-      <div><button id="btnAgregarCliente" class="btn" type="button">Agregar</button></div>
+    <div id="section-cerradas" class="hidden">
+      <div id="girasCerradasList"></div>
     </div>
-    <div id="clienteMsg" class="msg"></div>
-  </div>
 
-  <!-- Registro de gira -->
-  <div id="section-registro" class="hidden">
-    <h2>Registro de giras</h2>
-    <div id="registroVisitasList" style="margin-top:12px; display:grid; gap:8px"></div>
-  </div>
+    <button class="btn-ghost" id="logoutBtn">Cerrar sesión</button>
+  </section>
 
-  <div class="sep"></div>
-  <div id="section-cerradas" class="hidden">
-    <div id="girasCerradasList"></div>
-  </div>
-  <button class="btn-ghost" id="logoutBtn">Cerrar sesión</button>
+  <!-- ===========================
+       NUEVA sección: Dashboard
+       =========================== -->
+  <section id="section-dashboard" class="hidden">
+    <h2>Dashboard</h2>
 
+    <!-- Barra de filtros (el select de vendedor se inyecta por JS si es admin) -->
+    <div id="dashFilterBar">
+      <input id="dashDesde" type="date">
+      <input id="dashHasta" type="date">
+      <button id="btnDashAplicar" class="btn">Aplicar</button>
+      <button id="btnDashLimpiar" class="btn-ghost">Limpiar</button>
+    </div>
 
-</section>
+    <!-- Grid de tarjetas -->
+    <div id="dashGrid" class="dash-grid">
+      <!-- Se completa por JS con tarjetas por vendedor o del vendedor actual -->
+    </div>
 
+    <div style="margin-top:10px;">
+      <button id="btnVolverHome" class="btn-ghost">⬅ Volver</button>
+    </div>
+  </section>
 
+  <!-- ===========================
+       Login / Registro
+       =========================== -->
+  <section id="view-auth" class="card">
+    <h1 id="auth-title">Iniciar sesión</h1>
+    <p id="auth-sub">Usá tu email y contraseña.</p>
 
-<!-- Plantilla HTML que usará crearVisitaCard() -->
-<template id="nueva-visita-template">
-  <div class="rowCard">
-    <h2>Nueva visita</h2>
-    <form class="form-grid visitaForm">
-      <!-- Cliente nuevo -->
-      <div style="grid-column: 1 / -1;">
-        <label><input type="checkbox" name="es_cliente_nuevo"> Cliente nuevo</label>
+    <!-- Login -->
+    <form id="loginForm">
+      <label>Email</label>
+      <input id="log_email" type="email" required>
+      <label>Contraseña</label>
+      <input id="log_pass" type="password" required>
+      <div style="display:flex; gap:12px; margin-top:16px">
+        <button class="btn" type="submit">Ingresar</button>
+        <button class="btn-ghost" type="button" id="goToSignup">Crear cuenta</button>
       </div>
-      <!-- Cliente existente -->
-      <div style="grid-column: 1 / -1;">
-        <label>Cliente existente</label>
-        <select name="cliente_id" class="cliente-select">
-          <option value="">-- Seleccionar cliente --</option>
-        </select>
-      </div>
-      <!-- Nombre cliente nuevo -->
-      <div class="hidden lbl-cliente-nuevo" style="grid-column: 1 / -1;">
-        <label>Nombre del nuevo cliente</label>
-        <input type="text" name="cliente_nuevo" placeholder="Ingrese nombre del nuevo cliente" />
-      </div>
-      <!-- El resto del formulario se agrega por JS -->
+      <div id="loginMsg" class="msg"></div>
     </form>
-    <button type="button" class="btn cerrarBtn" style="margin-top:8px">Cerrar registro</button>
-  </div>
-</template>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="main.js"></script>
+    <!-- Signup -->
+    <form id="signupForm" class="hidden">
+      <div class="row">
+        <div><label>Nombre vendedor</label><input id="reg_name" type="text" required></div>
+        <div><label>Apellido vendedor</label><input id="reg_last" type="text" required></div>
+      </div>
+      <label>Email</label><input id="reg_email" type="email" required>
+      <label>Clave</label><input id="reg_pass" type="password" required>
+      <div style="display:flex; gap:12px; margin-top:16px">
+        <button class="btn" type="submit">Crear cuenta</button>
+        <button class="btn-ghost" type="button" id="backToLogin">Volver</button>
+      </div>
+      <div id="signupMsg" class="msg"></div>
+    </form>
+  </section>
+
+  <!-- Plantilla HTML que usará crearVisitaCard() -->
+  <template id="nueva-visita-template">
+    <div class="rowCard">
+      <h2>Nueva visita</h2>
+      <form class="form-grid visitaForm">
+        <!-- Cliente nuevo -->
+        <div style="grid-column: 1 / -1;">
+          <label><input type="checkbox" name="es_cliente_nuevo"> Cliente nuevo</label>
+        </div>
+        <!-- Cliente existente -->
+        <div style="grid-column: 1 / -1;">
+          <label>Cliente existente</label>
+          <select name="cliente_id" class="cliente-select">
+            <option value="">-- Seleccionar cliente --</option>
+          </select>
+        </div>
+        <!-- Nombre cliente nuevo -->
+        <div class="hidden lbl-cliente-nuevo" style="grid-column: 1 / -1;">
+          <label>Nombre del nuevo cliente</label>
+          <input type="text" name="cliente_nuevo" placeholder="Ingrese nombre del nuevo cliente" />
+        </div>
+        <!-- El resto del formulario se agrega por JS -->
+      </form>
+      <button type="button" class="btn cerrarBtn" style="margin-top:8px">Cerrar registro</button>
+    </div>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="main.js"></script>
 </body>
 </html>
