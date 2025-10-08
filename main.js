@@ -26,10 +26,28 @@ function setAuthMode(m) {
   else { hide(login); show(signup); }
 }
 function go(v) {
-  const auth = $('#view-auth'), home = $('#view-home');
-  if (v === 'home') { hide(auth); show(home); }
-  else { show(auth); hide(home); }
+  const auth = $('#view-auth');
+  const home = $('#view-home');
+  const dash = $('#section-dashboard');
+  const topbar = $('#topbar');
+  const panelPrioris = $('#panel-prioritarios');
+
+  if (v === 'home') {
+    hide(auth);
+    show(home);
+    show(topbar);
+    hide(dash);
+    // El panel de prioritarios lo controla cargarPrioritarios() tras login
+  } else {
+    // Vista auth (login/signup)
+    show(auth);
+    hide(home);
+    hide(dash);
+    hide(topbar);
+    hide(panelPrioris); // nunca visibles antes de login
+  }
 }
+
 
 /* ============ Sheets helpers ============ */
 async function enviarFilaAGoogleSheets(payload) {
@@ -1111,8 +1129,21 @@ $('#signupForm')?.addEventListener('submit', async e => {
 
 $('#logoutBtn')?.addEventListener('click', async () => {
   await supabase.auth.signOut();
-  go('auth'); setAuthMode('login');
+
+  // Reset de estado en memoria
+  currentUser = null;
+  currentRol = null;
+  currentVendedorId = null;
+
+  // Reset UI
+  hide($('#topbar'));
+  hide($('#panel-prioritarios'));
+  hide($('#section-dashboard'));
+  hide($('#view-home'));
+  show($('#view-auth'));
+  setAuthMode('login');
 });
+
 
 $('#addVisitaBtn')?.addEventListener('click', () => addVisitaRow());
 $('#guardarGiraBtn')?.addEventListener('click', () => createGiraAndVisitas());
@@ -1559,18 +1590,20 @@ async function ensureDashVendSelect() {
 
 /* === Mostrar / Ocultar Dashboard === */
 function showDashboard() {
-  // oculto home y muestro dashboard
+  if (!currentUser) {
+    alert('Iniciá sesión para ver el dashboard');
+    return;
+  }
   const home = document.getElementById('view-home');
   const dash = document.getElementById('section-dashboard');
-  if (!dash) { console.error('No existe #section-dashboard en el HTML'); return; }
   document.body.classList.add('dashboard-mode');
   if (home) home.classList.add('hidden');
   dash.classList.remove('hidden');
 
-  // oculto panel de prioritarios
+  // Ocultar panel de prioritarios mientras se ve el dashboard
   document.getElementById('panel-prioritarios')?.classList.add('hidden');
 
-  // seteo semana por defecto si no hay fechas
+  // setear semana por defecto si no hay fechas
   const t = new Date(), d = (t.getDay() + 6) % 7;
   const mon = new Date(t); mon.setDate(t.getDate() - d);
   const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
@@ -1580,9 +1613,9 @@ function showDashboard() {
   if (inpDesde && !inpDesde.value) inpDesde.value = fmt(mon);
   if (inpHasta && !inpHasta.value) inpHasta.value = fmt(sun);
 
-  // si es admin, creo el select de vendedor
   ensureDashVendSelect().then(renderDashboard).catch(() => renderDashboard());
 }
+
 
 function hideDashboard() {
   // muestro home, oculto dashboard
@@ -1608,4 +1641,9 @@ document.getElementById('btnDashLimpiar')?.addEventListener('click', () => {
   const sel = document.getElementById('dashVendSel');
   if (sel) sel.value = '';
   renderDashboard();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Estado por defecto: solo auth
+  go('auth');
 });

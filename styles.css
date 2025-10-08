@@ -456,3 +456,9 @@ body.with-sidebar { padding-right: 340px; }
     grid-template-columns: 1fr; /* 1 por fila si la pantalla es muy angosta */
   }
 }
+/* Ocultar elementos de la app mientras no hay sesión iniciada */
+.pre-auth #topbar,
+.pre-auth #panel-prioritarios,
+.pre-auth #section-dashboard {
+  display: none !important;
+}
